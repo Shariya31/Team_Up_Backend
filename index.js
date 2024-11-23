@@ -60,6 +60,8 @@ app.get('/', (req, res)=>{
     res.send('running')
 })
 
+//adding io to all the req
+
 app.use((req, res, next) => {
     req.io = io;
     next();
