@@ -1,0 +1,56 @@
+name: CI/CD Pipeline
+
+# When to run this workflow
+on:
+  push:
+    branches:
+      - master # Run on pushes to the master branch
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # The OS to run the job on
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 # Use Node.js version 18
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Run tests
+      - name: Run tests
+        run: npm test
+
+      # Step 5: Lint the code
+      - name: Run linter
+        run: npm run lint
+
+  deploy:
+    needs: build-and-test # Deploy only if tests pass
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Deploy to Heroku (example)
+      - name: Deploy to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+          heroku container:login
+          heroku container:push web --app <your-heroku-app-name>
+          heroku container:release web --app <your-heroku-app-name>
