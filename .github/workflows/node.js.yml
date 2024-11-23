@@ -23,7 +23,7 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t teamup-backend .
-
+      
       - name: Deploy to Heroku (or your platform)
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
@@ -32,3 +32,6 @@ jobs:
           docker tag teamup-backend registry.heroku.com/teamup-app/web
           docker push registry.heroku.com/teamup-app/web
           heroku container:release web -a teamup-app
+          
+
+          

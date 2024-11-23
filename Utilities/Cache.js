@@ -1,11 +1,17 @@
-import Redis from 'ioredis';
-const redis = new Redis();
+import NodeCache from 'node-cache'
 
-export const cache = (key, value, duration = 3600) => {
-    redis.set(key, JSON.stringify(value), 'EX', duration);
-};
+const cache = new NodeCache({stdTTL: 3600, checkperiod: 120 })
 
-export const getCache = async (key) => {
-    const data = await redis.get(key);
-    return data ? JSON.parse(data) : null;
-};
+export const setCache = (key, value)=>{
+    cache.set(key, value)
+}
+
+export const getCache = (key)=>{
+    return cache.get(key)
+}
+
+export const deleteCache = (key)=>{
+    cache.del(key)
+}
+
+export default cache

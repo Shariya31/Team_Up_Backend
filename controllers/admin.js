@@ -9,11 +9,24 @@ export const getAllUsers = TryCatch(async (req, res, next) => {
     const limit = Number(req.query.limit) || 10
     const skip = (page - 1) * limit
 
+    const cacheKey = 'all_users';
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) {
+        return res.status(200).json({
+            success: true,
+            users: cachedData,
+        });
+    }
+
+
     const users = await User.find().skip(skip).limit(limit);
 
     if (!users) {
         return next(new Errorhandler('No users found', 404));
     }
+
+    await setCache(cacheKey, users); 
 
     const totalUsers = await User.countDocuments();
 
