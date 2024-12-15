@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 
 app.get('/', (req, res) => {
-    res.send('Server is working!');
+    res.send('Server are working!');
 });
 
 export default app;
