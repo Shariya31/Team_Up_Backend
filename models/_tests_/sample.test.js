@@ -5,6 +5,6 @@ describe('Sample Test', () => {
     it('should return a success message', async () => {
         const res = await request(app).get('/');
         expect(res.statusCode).toBe(200);
-        expect(res.text).toBe('Servers is working!');
+        expect(res.text).toBe('Server is working!');
     });
 });
