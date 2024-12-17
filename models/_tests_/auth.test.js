@@ -1,118 +1,140 @@
 import request from 'supertest';
-import app from '../../app.js';
 import mongoose from 'mongoose';
+import app from '../../app.js'; // Your app's entry file
 import User from '../User.js';
-import dotenv from 'dotenv';
+import dotevn from 'dotenv'
+import bcrypt from 'bcrypt'
 
-dotenv.config();
+dotevn.config()
+// Mock environment variables
+process.env.JWT_SECRET
+process.env.MONGO_URI
 
-describe('Authentication API Tests', () => {
-  let server;
+beforeAll(async () => {
+    await mongoose.connect(process.env.MONGO_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
+});
 
-  beforeAll(() => {
-    // Start the server before running tests
-    server = app.listen();
-  });
+afterEach(async () => {
+    // Clear the database after each test
+    await User.deleteMany({});
+});
 
-  afterAll(async () => {
-    // Cleanup: Close server and database connection
-    await mongoose.connection.close();
-    server.close();
-  });
+afterAll(async () => {
+    // Disconnect the database
+    await mongoose.disconnect();
+});
 
-  // Clear users in the database after each test
-  afterAll(async () => {
-    await User.deleteMany();
-  });
+// Test suite for registerUser
+describe('POST /api/auth/register', () => {
+    it('should register a new user successfully', async () => {
+        const res = await request(app)
+            .post('/api/auth/register')
+            .send({
+                name: 'John Doe',
+                email: 'john@example.com',
+                password: 'password123',
+            });
 
-  const testUser = {
-    name: 'John Doe',
-    email: 'johndoe@example.com',
-    password: 'Test@1234',
-  };
-
-  // Test: User Registration
-  it('should register a new user successfully', async () => {
-    const res = await request(app).post('/api/auth/register').send(testUser);
-
-    expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty('success', true);
-    expect(res.body).toHaveProperty('message', 'User is created successfully');
-    expect(res.body.newUser).toHaveProperty('email', testUser.email);
-  });
-
-  // Test: User Registration - Missing Fields
-  it('should fail if any required field is missing', async () => {
-    const res = await request(app).post('/api/auth/register').send({
-      email: testUser.email,
-      password: testUser.password, // Missing 'name'
+        expect(res.statusCode).toBe(201);
+        expect(res.body.success).toBe(true);
+        expect(res.body.message).toBe('User is created successfully');
+        expect(res.body.newUser).toHaveProperty('_id');
+        expect(res.body.newUser).toHaveProperty('email', 'john@example.com');
     });
 
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Please fill all the fields');
-  });
+    it('should not register a user without required fields', async () => {
+        const res = await request(app)
+            .post('/api/auth/register')
+            .send({ email: 'missingfields@example.com' });
 
-  // Test: User Registration - User Already Exists
-  it('should fail if user already exists', async () => {
-    await User.create(testUser); // Pre-create the user
-
-    const res = await request(app).post('/api/auth/register').send(testUser);
-
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty(
-      'message',
-      'User already exists | Try to login'
-    );
-  });
-
-  // Test: User Login - Successful Login
-  it('should log in a user successfully', async () => {
-    // First, create a user
-    await User.create(testUser);
-
-    const res = await request(app).post('/api/auth/login').send({
-      email: testUser.email,
-      password: testUser.password,
+        expect(res.statusCode).toBe(400);
+        expect(res.body.success).toBe(false);
+        expect(res.body.message).toBe('Please fill all the fields');
     });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('success', true);
-    expect(res.body).toHaveProperty('message', 'Login Successful | Welcome John Doe');
-    expect(res.body).toHaveProperty('token');
-  });
+    it('should not register a user if email already exists', async () => {
+        await User.create({
+            name: 'Jane Doe',
+            email: 'jane@example.com',
+            password: 'password123',
+        });
 
-  // Test: User Login - Invalid Credentials
-  it('should fail with incorrect password', async () => {
-    // First, create a user
-    await User.create(testUser);
+        const res = await request(app)
+            .post('/api/auth/register')
+            .send({
+                name: 'Jane Doe',
+                email: 'jane@example.com',
+                password: 'password123',
+            });
 
-    const res = await request(app).post('/api/auth/login').send({
-      email: testUser.email,
-      password: 'WrongPassword123',
+        expect(res.statusCode).toBe(400);
+        expect(res.body.success).toBe(false);
+        expect(res.body.message).toBe('User already exists | Try to login');
+    });
+});
+
+// Test suite for loginUser
+describe('POST /api/auth/login', () => {
+    beforeEach(async () => {
+        // Create a user in the test database
+        // const passwordHash = await bcrypt.hash('password123', 10);
+        await User.create({
+            name: 'John Doe',
+            email: 'john@example.com',
+            password: 'password123',
+        });
     });
 
-    expect(res.statusCode).toBe(401);
-    expect(res.body).toHaveProperty('message', 'Password is not correct');
-  });
+    it('should login successfully with correct credentials', async () => {
+        const res = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: 'john@example.com',
+                password: 'password123',
+            });
 
-  // Test: User Login - User Not Found
-  it('should fail if user does not exist', async () => {
-    const res = await request(app).post('/api/auth/login').send({
-      email: 'nonexistent@example.com',
-      password: 'Test@1234',
+        expect(res.statusCode).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.message).toContain('Login Successful');
+        expect(res.body).toHaveProperty('token');
     });
 
-    expect(res.statusCode).toBe(404);
-    expect(res.body).toHaveProperty('message', 'No user found with this email');
-  });
+    it('should not login with incorrect password', async () => {
+        const res = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: 'john@example.com',
+                password: 'wrongpassword',
+            });
 
-  // Test: User Login - Missing Fields
-  it('should fail if required fields are missing in login', async () => {
-    const res = await request(app).post('/api/auth/login').send({
-      email: testUser.email, // Missing password
+        expect(res.statusCode).toBe(401);
+        expect(res.body.success).toBe(false);
+        expect(res.body.message).toBe('Password is not correct');
     });
 
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Please fill all the fields');
-  });
+    it('should not login if email is not registered', async () => {
+        const res = await request(app)
+            .post('/api/auth/login')
+            .send({
+                email: 'unknown@example.com',
+                password: 'password123',
+            });
+
+        expect(res.statusCode).toBe(404);
+        expect(res.body.success).toBe(false);
+        expect(res.body.message).toBe('No user found with this email');
+    });
+
+    it('should not login without required fields', async () => {
+        const res = await request(app)
+            .post('/api/auth/login')
+            .send({ email: 'john@example.com' });
+
+        expect(res.statusCode).toBe(400);
+        expect(res.body.success).toBe(false);
+        expect(res.body.message).toBe('Please fill all the fields');
+    });
 });
