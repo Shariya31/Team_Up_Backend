@@ -11,6 +11,12 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
 
+    services:
+      mongo:
+        image: mongo:5.0
+        ports:
+          - 27017:27017
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -18,13 +24,21 @@ jobs:
       - name: Set Up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install Dependencies
         run: npm install
 
       - name: Run Tests
+        env:
+          MONGO_URI: mongodb://localhost:27017/TeamUp
         run: npm test
+      
+      - name: Check MongoDB connection
+        run: |
+          echo "Checking MongoDB connection"
+          netstat -tuln
+
 
   deploy:
     name: Deploy to Render
@@ -38,7 +52,7 @@ jobs:
       - name: Set Up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install Dependencies
         run: npm install

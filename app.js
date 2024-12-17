@@ -6,7 +6,7 @@ import Errorhandler from './Utils/Errorhandler.js'
 //importing routes
 import sampleRoutes from './routes/sampleRoute.js'
 import userRoutes from './routes/userRoutes.js'
-import { connectDB } from './config/db.js';
+import connectDB from './config/db.js';
 dotenv.config();
 
 const app = express();

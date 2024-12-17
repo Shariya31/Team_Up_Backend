@@ -21,7 +21,7 @@ describe('Authentication API Tests', () => {
   });
 
   // Clear users in the database after each test
-  afterEach(async () => {
+  afterAll(async () => {
     await User.deleteMany();
   });
 
