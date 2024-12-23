@@ -6,6 +6,7 @@ import Errorhandler from './Utils/Errorhandler.js'
 //importing routes
 import sampleRoutes from './routes/sampleRoute.js'
 import userRoutes from './routes/userRoutes.js'
+import taskRoutes from './routes/taskRoutes.js'
 import connectDB from './config/db.js';
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.get('/error', (req, res, next) => {
 
 app.use('/api', sampleRoutes)
 app.use('/api/auth', userRoutes)
+app.use('/api', taskRoutes)
 
 app.use(errorMiddleware)
 
