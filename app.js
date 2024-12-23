@@ -13,9 +13,6 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-const mongoUri = process.env.MONGO_URI || ""
-connectDB(mongoUri)
-
 app.get('/', (req, res) => {
     res.send('Server are working!');
 });
