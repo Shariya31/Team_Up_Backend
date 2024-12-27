@@ -7,6 +7,8 @@ import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
 
 dotenv.config();
+// Mock environment variables
+process.env.MONGO_URI
 
 describe('Task Controllers', () => {
     let user;
@@ -15,7 +17,7 @@ describe('Task Controllers', () => {
 
     beforeAll(async () => {
         // Connect to the test database
-        const dbUri = process.env.MONGO_URI_TEST || 'mongodb://127.0.0.1:27017/TeamUp_test';
+        const dbUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/TeamUp_test';
         await mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true });
 
         // Create a test user
