@@ -6,14 +6,12 @@ import Errorhandler from './Utils/Errorhandler.js'
 //importing routes
 import sampleRoutes from './routes/sampleRoute.js'
 import userRoutes from './routes/userRoutes.js'
+import taskRoutes from './routes/taskRoutes.js'
 import connectDB from './config/db.js';
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-
-const mongoUri = process.env.MONGO_URI || ""
-connectDB(mongoUri)
 
 app.get('/', (req, res) => {
     res.send('Server are working!');
@@ -26,6 +24,7 @@ app.get('/error', (req, res, next) => {
 
 app.use('/api', sampleRoutes)
 app.use('/api/auth', userRoutes)
+app.use('/api', taskRoutes)
 
 app.use(errorMiddleware)
 
